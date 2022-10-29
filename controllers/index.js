@@ -1,76 +1,117 @@
-const fs = require('../firebase');
-const {db} = fs;
-let {userdata} =require ("/.data")
+
+const {userData} =require ("../data.js")
 // CRUD
-const createUserData = async (req, res) => {
-    try {
-        const {body: data} = req;
-        const UserDb = require ("/.data")
-        const {_path: {segments}} =  await UserDb.add(data);
-        const id = segments[1];
-        res.send({
-            status: 200,
-            id
-        });
-    } catch (error){
-        res.send(error);
-    }
-};
+
 
 const getUserData = async (req, res) => {
     try {
-        const {params:{id}} = req;
-        const UserDb = require ("/.data").doc(id);
-        const response = await UserDb.get();
-        const {_fieldsProto: {firstName, lastName, maidenName,age,address,city,coordinates,lat,long,postalCode,state,jobTitle}} = response;
+        const {params : { id }} = req;
+        const objeto = userData.find(obj => obj.id == id);
 
-        console.log(firstName, lastName, maidenName,age,address,city,coordinates,lat,long,postalCode,state,jobTitle);
-       
+        if (!objeto) {
+            res.send({
+                status: 404,
+                user: {}
+            })
+        }
+        console.log(id)
+        
         res.send({
             status: 200,
-            firstName: firstName.stringValue,
-            lastName: lastName.stringValue,
-            maidenName: maidenName.stringValue,
-            age: Number(rating.integerValue),
-            address: address.stringValue,
-            city: city.stringValue,
-            coordinates: coordinates.stringValue,
-            lat: Number(rating.integerValue || rating.doubleValue),
-            long: Number(rating.integerValue || rating.doubleValue),
-            postalCode: coordinates.stringValue,
-            state: state.stringValue,
-            jobTitle: jobTitle.stringValue,
-            rating: Number(rating.integerValue || rating.doubleValue)
-        });
+            user:{
+                fullName: (`${userData[id].firstName} ${userData[id].lastName} ${userData[id].maidenName}`),
+                email: userData[id].email,
+                age: userData[id].age,
+                address: userData[id].address,
+                jobTitle: userData[id].company.title
+            }
+        })
+        
+    }catch(error){
+        console.log(error)
+        res.send({
+            status:500,
+            error});
 
-    } catch (error) {
-        res.send(error);
     }
-};
+}
 
 const updateUserAddress = async (req, res) => {
-    try {
-        const {body: data} = req;
-        const {id, time, author, name, rating} = data;
-        const UserDb = require ("/.data").doc(id);
-        await UserDb.update({
-            address,city,coordinates,lat,long,postalCode,states
-        });
-       
+    try{
+        const {params : { id }} = req;
+        const {body: address} = req;
+        const objeto = userData.find(obj => obj.id == id);
+        userData[id-1].address = address;
+        // const { }
+        if (!objeto) {
+            res.send({
+                status: 404,
+                user: {}
+            })
+        }
+
         res.send({
             status: 200,
-            id
-        });
+            user:{...userData[id-1]}
+        })
+    }catch(error){
+        console.log(error);
+        res.send({
+            status:500,
+            error});
 
-    } catch (error) {
-        res.send(error);
     }
+
 };
 
+const createUserData = async (req, res) => {
+    try{
+        const {body : { email }} = req;
+        const newID = userData[userData.length-1].id +1;
+        userData.push({"id":newID, email})
+        res.send({
+            status: 200,
+            newID,
+            email
+        })
+        console.log(userData)
+    }catch(error){
+        console.log(error);
+        res.send({
+            status:500,
+            error});
+
+    }
+}
+
+const deleteUser = async (req, res) => {
+    try {
+        const {params : { id }} = req;
+        const objeto = userData.find(obj => obj.id == id);
+
+        if (!objeto) {
+            res.send({
+                status: 404,
+                user: {}
+            })
+        }
+        userData.splice(id-1, 1);
+        res.send({
+            status: 200,
+        })
+        console.log(userData)
+    }catch(error){
+        res.send({
+            status:500,
+            error});
+
+    }
+}
 
 
 module.exports = {
     createUserData,
     getUserData,
     updateUserAddress,
+    deleteUser
 }
